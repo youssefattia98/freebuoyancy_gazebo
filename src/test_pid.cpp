@@ -8,6 +8,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
+/*
 void ParseParams(TiXmlNode* _param_node, std::vector<std::string>&_pids)
 {
 
@@ -65,24 +66,5 @@ int main(int argc, char ** argv)
         ros::spinOnce();
         sleep(1);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
+*/

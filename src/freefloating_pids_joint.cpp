@@ -5,7 +5,7 @@ using std::endl;
 using std::string;
 
 
-void FreeFloatingJointPids::Init(const ros::NodeHandle&_node, ros::Duration&_dt)
+void FreeFloatingJointPids::Init(/*const ros::NodeHandle&_node*/, /*ros::Duration&_dt*/)
 {
     // init dt from rate
     dt_ = _dt;
@@ -64,8 +64,8 @@ void FreeFloatingJointPids::Init(const ros::NodeHandle&_node, ros::Duration&_dt)
 
         position_filtered_measure_[i] = velocity_filtered_measure_[i] = 0;
 
-        InitPID(position_pids_[i].pid, ros::NodeHandle(_node, joint_names[i] + "/position"), use_dynamic_reconfig);
-        InitPID(velocity_pids_[i].pid, ros::NodeHandle(_node, joint_names[i] + "/velocity"), use_dynamic_reconfig);
+        //InitPID(position_pids_[i].pid, ros::NodeHandle(_node, joint_names[i] + "/position"), use_dynamic_reconfig);
+        //InitPID(velocity_pids_[i].pid, ros::NodeHandle(_node, joint_names[i] + "/velocity"), use_dynamic_reconfig);
     }
 
     InitSwitchServices("joint");

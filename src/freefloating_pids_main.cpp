@@ -8,9 +8,9 @@ int main(int argc, char ** argv)
 {
 
     // init ROS node
-    ros::init(argc, argv, "freefloating_pid_control");
-    ros::NodeHandle rosnode;
-    ros::NodeHandle control_node(rosnode, "controllers");
+    //ros::init(argc, argv, "freefloating_pid_control");
+    //ros::NodeHandle rosnode;
+    //ros::NodeHandle control_node(rosnode, "controllers");
 
     // wait for body or joint param
     bool control_body = false;
@@ -26,7 +26,7 @@ int main(int argc, char ** argv)
     if(control_node.hasParam("config/body/control_type"))
     {
         std::string control_type;
-        control_node.getParam("config/body/control_type", control_type);        
+        control_node.getParam("config/body/control_type", control_type);
         if(control_type == "thruster")
             // check for a flag that tells us to use PID however
             control_body = control_node.param("config/body/use_pid", false);
@@ -60,20 +60,21 @@ int main(int argc, char ** argv)
     // -- end parsing parameter server
 
     // loop rate
-    ros::Rate loop(100);
-    ros::Duration dt(.01);
+    //ros::Rate loop(100);
+    //ros::Duration dt(.01);
 
-    ros::SubscribeOptions ops;
+    //ros::SubscribeOptions ops;
 
     // -- Init body ------------------
     // PID's class
     FreeFloatingBodyPids body_pid;
-    ros::Subscriber body_position_sp_subscriber, body_velocity_sp_subscriber, body_state_subscriber;
-    ros::Publisher body_command_publisher;
+    //ros::Subscriber body_position_sp_subscriber, body_velocity_sp_subscriber, body_state_subscriber;
+    //ros::Publisher body_command_publisher;
     if(control_body)
     {
         body_pid.Init(control_node, dt, controlled_axes);
 
+        /*
         // position setpoint
         body_position_sp_subscriber =
                 rosnode.subscribe(body_position_sp_topic, 1, &FreeFloatingBodyPids::PositionSPCallBack, &body_pid);
@@ -86,19 +87,21 @@ int main(int argc, char ** argv)
         // command
         body_command_publisher =
                 rosnode.advertise<geometry_msgs::Wrench>(body_command_topic, 1);
+        */
     }
 
     // -- Init joints ------------------
     FreeFloatingJointPids joint_pid;
     // declare subscriber / publisher
-    ros::Subscriber joint_setpoint_subscriber, joint_state_subscriber;
-    ros::Publisher joint_command_publisher;
+    //ros::Subscriber joint_setpoint_subscriber, joint_state_subscriber;
+    //ros::Publisher joint_command_publisher;
 
     if(control_joints)
     {
         // pid
         joint_pid.Init(control_node, dt);
 
+        /*
         // setpoint
         joint_setpoint_subscriber = rosnode.subscribe(joint_setpoint_topic, 1, &FreeFloatingJointPids::SetpointCallBack, &joint_pid);
 
@@ -107,15 +110,16 @@ int main(int argc, char ** argv)
 
         // command
         joint_command_publisher = rosnode.advertise<sensor_msgs::JointState>(joint_command_topic, 1);
+        */
     }
 
     std::vector<std::string> joint_names;
     if(control_joints)
         control_node.getParam("config/joints/name", joint_names);
 
-    ROS_INFO("Init PID control for %s: %i body axes, %i joints", rosnode.getNamespace().c_str(), (int) controlled_axes.size(), (int) joint_names.size());
+    //ROS_INFO("Init PID control for %s: %i body axes, %i joints", rosnode.getNamespace().c_str(), (int) controlled_axes.size(), (int) joint_names.size());
 
-    while(ros::ok())
+    while(true)
     {
         // update body and publish
         if(control_body)
@@ -127,7 +131,7 @@ int main(int argc, char ** argv)
             if(joint_pid.UpdatePID())
                 joint_command_publisher.publish(joint_pid.EffortCommand());
 
-        ros::spinOnce();
+        //ros::spinOnce();
         loop.sleep();
     }
 }

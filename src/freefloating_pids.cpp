@@ -25,19 +25,19 @@ void FreeFloatingPids::UpdateVelocityPID()
 
 bool FreeFloatingPids::ToPositionControl(std_srvs::EmptyRequest &_req, std_srvs::EmptyResponse &_res)
 {
-    ROS_INFO("Switching to position control");
+    cout << ("Switching to position control\n");
     control_type_ = POSITION_CONTROL;
     return true;
 }
 
 bool FreeFloatingPids::ToVelocityControl(std_srvs::EmptyRequest &_req, std_srvs::EmptyResponse &_res)
 {
-    ROS_INFO("Switching to velocity control");
+    cout << ("Switching to velocity control\n");
     control_type_ = VELOCITY_CONTROL;
     return true;
 }
 
-void FreeFloatingPids::InitPID(control_toolbox::Pid &_pid, const ros::NodeHandle&_node, const bool &_use_dynamic_reconfig)
+void FreeFloatingPids::InitPID(control_toolbox::Pid &_pid, /*const ros::NodeHandle&_node*/, const bool &_use_dynamic_reconfig)
 {
     if(_use_dynamic_reconfig)
     {
@@ -51,7 +51,7 @@ void FreeFloatingPids::InitPID(control_toolbox::Pid &_pid, const ros::NodeHandle
         // Load PID gains from parameter server
         if (!_node.getParam("p", gains.p_gain_))
         {
-          ROS_ERROR("No p gain specified for pid.  Namespace: %s", _node.getNamespace().c_str());
+          cout << ("No p gain specified for pid.  Namespace: %s\n", _node.getNamespace().c_str());
           return;
         }
         // Only the P gain is required, the I and D gains are optional and default to 0:

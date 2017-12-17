@@ -1,5 +1,5 @@
 
-#include <ros/ros.h>
+//#include <ros/ros.h>
 #include <geometry_msgs/Wrench.h>
 #include <geometry_msgs/Twist.h>
 #include <gazebo/gazebo.hh>
@@ -32,9 +32,9 @@ void FreeFloatingControlPlugin::ReadVector3(const std::string &_string, math::Ve
 bool FreeFloatingControlPlugin::SwitchService(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &res)
 {
     if(controller_is_running_)
-        ROS_INFO("Switching freefloating_control OFF");
+        cout << ("Switching freefloating_control OFF\n");
     else
-        ROS_INFO("Switching freefloating_control ON");
+        cout << ("Switching freefloating_control ON\n");
     controller_is_running_ = !controller_is_running_;
     return true;
 }
@@ -47,12 +47,12 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
     controller_is_running_ = true;
 
     // register ROS node & time
-    rosnode_ = ros::NodeHandle(robot_namespace_);
-    ros::NodeHandle control_node(rosnode_, "controllers");
+    //rosnode_ = ros::NodeHandle(robot_namespace_);
+    //ros::NodeHandle control_node(rosnode_, "controllers");
     t_prev_ = 0;
 
     // get surface Z
-    rosnode_.getParam("/gazebo/surface", z_surface_);
+    //rosnode_.getParam("/gazebo/surface", z_surface_);
 
     // check for body or joint param
     control_body_ = false;
@@ -130,7 +130,7 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
                         thruster_names_.push_back(name.str());
                     }
 
-                    ROS_INFO("Adding %s as a fixed thruster", thruster_names_[thruster_names_.size()-1].c_str());
+                    cout << ("Adding %s as a fixed thruster\n", thruster_names_[thruster_names_.size()-1].c_str());
                 }
                 else if(sdf_element->HasElement("name"))
                 {
@@ -143,7 +143,7 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
                     // find and register corresponding link
                     thruster_links_.push_back(model_->GetLink(sdf_element->Get<std::string>("name")));
 
-                    ROS_INFO("Adding %s as a steering thruster", thruster_names_[thruster_names_.size()-1].c_str());
+                    cout << ("Adding %s as a steering thruster\n", thruster_names_[thruster_names_.size()-1].c_str());
                 }
 
                 // register maximum effort
@@ -157,7 +157,7 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
         // check consistency
         if(wrench_control_ && thruster_steer_idx_.size())
         {
-            ROS_WARN("%s has steering thrusters and cannot be controlled with wrench", model_->GetName().c_str());
+            cout << ("%s has steering thrusters and cannot be controlled with wrench\n", model_->GetName().c_str());
             wrench_control_ = false;
         }
 
@@ -166,24 +166,28 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
         // initialize publisher to thruster_use
         thruster_use_.name = thruster_names_;
         thruster_use_.position.resize(thruster_max_command_.size());
-        thruster_use_publisher_ = rosnode_.advertise<sensor_msgs::JointState>("thruster_use", 1);
+        //thruster_use_publisher_ = rosnode_.advertise<sensor_msgs::JointState>("thruster_use", 1);
 
-        ros::SubscribeOptions ops;
+        //ros::SubscribeOptions ops;
         if(wrench_control_)
         {
+            /*
             ops = ros::SubscribeOptions::create<geometry_msgs::Wrench>(
                         body_command_topic, 1,
                         boost::bind(&FreeFloatingControlPlugin::BodyCommandCallBack, this, _1),
                         ros::VoidPtr(), &callback_queue_);
+            */
         }
         else
         {
+            /*
             ops = ros::SubscribeOptions::create<sensor_msgs::JointState>(
                         body_command_topic, 1,
                         boost::bind(&FreeFloatingControlPlugin::ThrusterCommandCallBack, this, _1),
                         ros::VoidPtr(), &callback_queue_);
+            */
         }
-        body_command_subscriber_ = rosnode_.subscribe(ops);
+        //body_command_subscriber_ = rosnode_.subscribe(ops);
         body_command_received_ = false;
 
         // if wrench control, compute map pseudo-inverse and help PID's with maximum forces by axes
@@ -240,11 +244,13 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
         control_node.param("config/joints/state", joint_state_topic, std::string("joint_state"));
 
         // initialize subscriber to joint commands
+        /*
         ros::SubscribeOptions ops = ros::SubscribeOptions::create<sensor_msgs::JointState>(
                     joint_command_topic, 1,
                     boost::bind(&FreeFloatingControlPlugin::JointCommandCallBack, this, _1),
                     ros::VoidPtr(), &callback_queue_);
-        joint_command_subscriber_ = rosnode_.subscribe(ops);
+        */
+        //joint_command_subscriber_ = rosnode_.subscribe(ops);
         joint_command_received_ = false;
 
         // push joint limits and setup joint states
@@ -296,7 +302,7 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
         control_node.setParam("config/joints/velocity", vel_max);
 
         // setup joint_states publisher
-        joint_state_publisher_ = rosnode_.advertise<sensor_msgs::JointState>(joint_state_topic, 1);
+        //joint_state_publisher_ = rosnode_.advertise<sensor_msgs::JointState>(joint_state_topic, 1);
         joint_states_.name = joint_names;
         joint_states_.position.resize(joints_.size());
         joint_states_.velocity.resize(joints_.size());
@@ -316,8 +322,8 @@ void FreeFloatingControlPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _
     // Register plugin update
     update_event_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&FreeFloatingControlPlugin::Update, this));
 
-    ros::spinOnce();
-    ROS_INFO("Started FreeFloating Control Plugin for %s.", _model->GetName().c_str());
+    //ros::spinOnce();
+    cout << ("Started FreeFloating Control Plugin for %s.\n", _model->GetName().c_str());
 }
 
 void FreeFloatingControlPlugin::Update()
@@ -379,11 +385,11 @@ void FreeFloatingControlPlugin::Update()
     }
 
     // publish joint states anyway
-    double t = ros::Time::now().toSec();
+    //double t = ros::Time::now().toSec();
     if((t-t_prev_) > update_T_ && joints_.size() != 0)
     {
         t_prev_ = t;
-        joint_states_.header.stamp = ros::Time::now();
+        //joint_states_.header.stamp = ros::Time::now();
 
         for(unsigned int i=0;i<joints_.size();++i)
         {
@@ -435,13 +441,13 @@ void FreeFloatingControlPlugin::ThrusterCommandCallBack(const sensor_msgs::Joint
 
     if(read_effort && (_msg->name.size() != _msg->effort.size()))
     {
-        ROS_WARN("Received inconsistent thruster command, name and effort dimension do not match");
+        cout << ("Received inconsistent thruster command, name and effort dimension do not match\n");
         return;
     }
     else
         if(!read_effort && (_msg->name.size() != _msg->position.size()))
         {
-            ROS_WARN("Received inconsistent thruster command, name and position dimension do not match");
+            cout << ("Received inconsistent thruster command, name and position dimension do not match\n");
             return;
         }
 

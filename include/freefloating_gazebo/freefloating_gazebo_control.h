@@ -2,8 +2,8 @@
 #define FREEFLOATINGGAZEBOCONTROL_H
 
 #include <gazebo/common/Plugin.hh>
-#include <ros/ros.h>
-#include <ros/callback_queue.h>
+//#include <ros/ros.h>
+//#include <ros/callback_queue.h>
 #include <geometry_msgs/Wrench.h>
 #include <geometry_msgs/Vector3.h>
 #include <std_msgs/Float32MultiArray.h>
@@ -24,7 +24,7 @@ public:
     ~FreeFloatingControlPlugin()
     {
         event::Events::DisconnectWorldUpdateBegin(this->update_event_);
-        rosnode_.shutdown();
+        //rosnode_.shutdown();
         //    delete rosnode_;
     }
 
@@ -56,11 +56,11 @@ private:
 private:
     // -- general data ----------------------------------------
     std::string robot_namespace_;
-    ros::NodeHandle rosnode_;
-    ros::CallbackQueue callback_queue_;
+    //ros::NodeHandle rosnode_;
+    //ros::CallbackQueue callback_queue_;
     physics::ModelPtr model_;
     event::ConnectionPtr update_event_;
-    ros::ServiceServer switch_service_;
+    //ros::ServiceServer switch_service_;
     bool controller_is_running_;
     double update_T_;
     double z_surface_;
@@ -80,7 +80,7 @@ private:
     Eigen::VectorXd thruster_command_;
 
     // subscriber
-    ros::Subscriber body_command_subscriber_;
+    //ros::Subscriber body_command_subscriber_;
     std::string body_command_topic_;
     bool body_command_received_;
 
@@ -90,7 +90,7 @@ private:
     bool control_joints_;
 
     // subscriber
-    ros::Subscriber joint_command_subscriber_;
+    //ros::Subscriber joint_command_subscriber_;
     std::string joint_command_topic_;
     sensor_msgs::JointState joint_command_;
     bool joint_command_received_;
@@ -98,12 +98,12 @@ private:
     // -- publishers ----------------------------------------
 
     // publisher to joint state
-    ros::Publisher joint_state_publisher_;
+    //ros::Publisher joint_state_publisher_;
     sensor_msgs::JointState joint_states_;
     double t_prev_;
 
     // publisher to thruster percent use
-    ros::Publisher thruster_use_publisher_;
+    //ros::Publisher thruster_use_publisher_;
     sensor_msgs::JointState thruster_use_;
 
 

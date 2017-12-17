@@ -5,7 +5,7 @@ using std::endl;
 using std::string;
 
 
-void FreeFloatingBodyPids::Init(const ros::NodeHandle &_node, ros::Duration&_dt, const std::vector<std::string>&_controlled_axes)
+void FreeFloatingBodyPids::Init(/*const ros::NodeHandle &_node*/, /*ros::Duration&_dt*/, const std::vector<std::string>&_controlled_axes)
 {
     pid_node_ = _node;
     // init dt from rate
@@ -65,8 +65,8 @@ void FreeFloatingBodyPids::Init(const ros::NodeHandle &_node, ros::Duration&_dt,
             break;
         }
 
-        InitPID(position_pids_[i].pid, ros::NodeHandle(_node, axes[j] + "/position"), use_dynamic_reconfig);
-        InitPID(velocity_pids_[i].pid, ros::NodeHandle(_node, axes[j] + "/velocity"), use_dynamic_reconfig);
+        //InitPID(position_pids_[i].pid, ros::NodeHandle(_node, axes[j] + "/position"), use_dynamic_reconfig);
+        //InitPID(velocity_pids_[i].pid, ros::NodeHandle(_node, axes[j] + "/velocity"), use_dynamic_reconfig);
 
         //        BuildPIDCouple(ros::NodeHandle(_node, axes[j]), pose_error_ptr, vel_error_ptr, command_pose_ptr, command_vel_ptr);
     }
