@@ -11,7 +11,7 @@
 #include <gazebo/math/Pose.hh>
 
 
-#include "freefloating_gazebo_fluid.h"
+#include "freebuoyancy.h"
 
 using std::cout;
 using std::endl;
@@ -21,7 +21,7 @@ using std::string;
 namespace gazebo
 {
 
-void FreeFloatingFluidPlugin::ReadVector3(const std::string &_string, math::Vector3 &_vector)
+void FreeByouancyPlugin::ReadVector3(const std::string &_string, math::Vector3 &_vector)
 {
     std::stringstream ss(_string);
     double xyz[3];
@@ -30,9 +30,9 @@ void FreeFloatingFluidPlugin::ReadVector3(const std::string &_string, math::Vect
     _vector.Set(xyz[0], xyz[1], xyz[2]);
 }
 
-void FreeFloatingFluidPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
+void FreeByouancyPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf)
 {
-    cout << ("Loading freefloating_fluid plugin -\n");
+    cout << ("Loading freebuoyancy_gazebo plugin -\n");
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
 
     this->world_ = _world;
@@ -64,17 +64,17 @@ void FreeFloatingFluidPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sd
     fluid_velocity_.Set(0,0,0);
 
     // Register plugin update
-    update_event_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&FreeFloatingFluidPlugin::Update, this));
+    update_event_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&FreeByouancyPlugin::Update, this));
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
     // Clear existing links
     buoyant_links_.clear();
     parsed_models_.clear();
 
-    cout << ("Loaded freefloating_fluid plugin.\n");
+    cout << ("Loaded freebuoyancy_gazebo plugin.\n");
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
 }
 
-void FreeFloatingFluidPlugin::Update()
+void FreeByouancyPlugin::Update()
 {
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
 
@@ -170,7 +170,7 @@ void FreeFloatingFluidPlugin::Update()
 
 
 
-void FreeFloatingFluidPlugin::ParseNewModel(const physics::ModelPtr &_model)
+void FreeByouancyPlugin::ParseNewModel(const physics::ModelPtr &_model)
 {
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
     // define new model structure: name / pointer / publisher to odometry
@@ -385,7 +385,7 @@ void FreeFloatingFluidPlugin::ParseNewModel(const physics::ModelPtr &_model)
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
 }
 
-void FreeFloatingFluidPlugin::RemoveDeletedModel(std::vector<model_st>::iterator &_model_it)
+void FreeByouancyPlugin::RemoveDeletedModel(std::vector<model_st>::iterator &_model_it)
 {
     cout << ("Removing deleted model: %s\n", _model_it->name.c_str());
 

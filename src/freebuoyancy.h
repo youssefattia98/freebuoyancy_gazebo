@@ -6,11 +6,11 @@
 namespace gazebo
 {
 
-class FreeFloatingFluidPlugin : public  WorldPlugin
+class FreeByouancyPlugin : public  WorldPlugin
 {
 public:
-    FreeFloatingFluidPlugin() {}
-    ~FreeFloatingFluidPlugin()
+    FreeByouancyPlugin() {}
+    ~FreeByouancyPlugin()
     {
     }
 
@@ -59,6 +59,6 @@ private:
     math::Vector3 fluid_velocity_;
 
 };
-GZ_REGISTER_WORLD_PLUGIN(FreeFloatingFluidPlugin)
+GZ_REGISTER_WORLD_PLUGIN(FreeByouancyPlugin)
 }
 #endif // FREEFLOATINGGAZEBOFLUID_H
