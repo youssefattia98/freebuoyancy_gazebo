@@ -215,14 +215,16 @@ void FreeFloatingFluidPlugin::ParseNewModel(const physics::ModelPtr &_model)
         urdf_doc.Parse(sdf_element->ToString("").c_str(), 0);
         urdf_root = urdf_doc.FirstChildElement();
         if (sdf_element->HasElement("link")) {
+            cout << "LINKKKKKKKKKKKKKKKKKKKKKKKKKK" << "\n";
             cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
             auto link = sdf_element->GetElement("link");
+            auto linkName = link->GetAttribute("name")->GetAsString();
             cout << ("> ") << link->ToString("")  << ("\n");
             if (link->HasElement("buoyancy")) {
                 found = true;
                 link_test = (new TiXmlElement(link->ToString("")));
                 link_node = link_test->Clone();
-                sdf_link = _model->GetChildLink("base_link");
+                sdf_link = _model->GetChildLink(linkName);
                 cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
                 cout << ("> ") << link->Get<double>("buoyancy")  << ("\n");
                 //cout << ("> ") << link_test->ValueStr("") << ("\n");
