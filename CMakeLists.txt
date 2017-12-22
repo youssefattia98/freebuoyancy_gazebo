@@ -14,3 +14,5 @@ add_library(freebuoyancy_gazebo SHARED
 )
 
 target_link_libraries(freebuoyancy_gazebo ${GAZEBO_LIBRARIES})
+
+install(TARGETS freebuoyancy_gazebo DESTINATION ${GAZEBO_PLUGIN_PATH})
