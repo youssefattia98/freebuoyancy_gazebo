@@ -140,8 +140,6 @@ void FreeByouancyPlugin::Update()
         // apply damping coefficients
         actual_force -= link_it->link->GetWorldPose().rot.RotateVector(link_it->linear_damping * velocity_difference);
 
-        //link_it->link->AddForceAtRelativePosition(link_it->link->GetWorldPose().rot.RotateVectorReverse(link_it->buoyant_force),
-        //                                          link_it->buoyancy_center);
         link_it->link->AddForceAtWorldPosition(actual_force, cob_position);
 
         // same for angular damping
@@ -220,28 +218,6 @@ void FreeByouancyPlugin::ParseNewModel(const physics::ModelPtr &_model)
                     if(buoy->HasElement("compensation")) {
                         compensation = stof(buoy->GetElement("compensation")->GetValue()->GetAsString());
                     }
-                    /*
-                    else if(buoy_node->ValueStr() == "limit")
-                    {
-                        std::stringstream ss(buoy_node->ToElement()->Attribute("radius"));
-                        ss >> new_buoy_link.limit;
-                    }
-                    else if(buoy_node->ValueStr() == "damping")
-                    {
-                        if(buoy_node->ToElement()->Attribute("xyz") != NULL)
-                        {
-                            ReadVector3((buoy_node->ToElement()->Attribute("xyz")), new_buoy_link.linear_damping);
-                            cout << ("Found linear damping\n");
-                        }
-                        if(buoy_node->ToElement()->Attribute("rpy") != NULL)
-                        {
-                            ReadVector3((buoy_node->ToElement()->Attribute("rpy")), new_buoy_link.angular_damping);
-                            cout << ("Found angular damping\n");
-                        }
-                    }
-                    else
-                        cout << ("Unknown tag <%s/> in buoyancy node for model %s\n", buoy_node->ValueStr().c_str(), _model->GetName().c_str());
-                    */
 
                     new_buoy_link.buoyant_force = -compensation * sdf_link->GetInertial()->GetMass() * WORLD_GRAVITY;
 
@@ -257,26 +233,8 @@ void FreeByouancyPlugin::ParseNewModel(const physics::ModelPtr &_model)
     }
     for(urdf_node = urdf_root->FirstChild(); urdf_node != 0; urdf_node = urdf_node->NextSibling())
     {
-        /*
-        if(urdf_node->ValueStr() == "link")
-        {
-            cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
-            // find corresponding sdf model link if any
-            found = false;
-            for(link_index = 0; link_index < _model->GetLinks().size(); ++link_index)
-            {
-                cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
-                if(urdf_node->ToElement()->Attribute("name") == _model->GetLinks()[link_index]->GetName())
-                {
-                    cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
-                    found = true;
-                    sdf_link = _model->GetLinks()[link_index];
-                    break;
-                }
-            }*/
             if(found)
             {
-                //cout << ("> ") << link_node->FirstChild()->ValueStr() << ("\n");
                 for(; link_node != 0; link_node = link_node->NextSibling())
                 {
                     if(link_node->ValueStr() == "buoyancy")
