@@ -1,7 +1,4 @@
 #include <gazebo/common/Plugin.hh>
-//#include <ros/ros.h>
-//#include <geometry_msgs/Wrench.h>
-//#include <geometry_msgs/Twist.h>
 #include <gazebo/gazebo.hh>
 
 #include <gazebo/physics/PhysicsIface.hh>
@@ -40,9 +37,6 @@ void FreeFloatingFluidPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sd
 
     this->world_ = _world;
 
-    // register ROS node
-    //rosnode_ = new ros::NodeHandle("gazebo");
-
     // parse plugin options
     description_ = "robot_description";
     has_surface_ = false;
@@ -63,21 +57,12 @@ void FreeFloatingFluidPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sd
         const math::Vector3 WORLD_GRAVITY = world_->GetPhysicsEngine()->GetGravity().Normalize();
         // water surface is orthogonal to gravity
         surface_plane_.Set(WORLD_GRAVITY.x, WORLD_GRAVITY.y, WORLD_GRAVITY.z, WORLD_GRAVITY.Dot(surface_point));
-        // push on parameter server
-        //rosnode_->setParam("surface", surface_point.z);
     }
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
     if(_sdf->HasElement("fluidTopic"))  fluid_topic = _sdf->Get<std::string>("fluidTopic");
 
-    // initialize subscriber to water current
-    /*
-    ros::SubscribeOptions ops = ros::SubscribeOptions::create<geometry_msgs::Vector3>(
-                fluid_topic, 1,
-                boost::bind(&FreeFloatingFluidPlugin::FluidVelocityCallBack, this, _1),
-                ros::VoidPtr(), &callback_queue_);
-    */
     fluid_velocity_.Set(0,0,0);
-    //fluid_velocity_subscriber_ = rosnode_->subscribe(ops);
+
     // Register plugin update
     update_event_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&FreeFloatingFluidPlugin::Update, this));
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
@@ -92,8 +77,6 @@ void FreeFloatingFluidPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sd
 void FreeFloatingFluidPlugin::Update()
 {
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
-    // activate callbacks
-    //callback_queue_.callAvailable();
 
     // look for new world models
     unsigned int i;
@@ -178,43 +161,9 @@ void FreeFloatingFluidPlugin::Update()
         link_it->link->AddRelativeTorque(-link_it->angular_damping*velocity_difference);
 
         cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
-        // publish states as odometry message
-        //nav_msgs::Odometry state;
-        //state.header.frame_id = "world";
-        //state.header.stamp = ros::Time::now();
+
         math::Vector3 vec;
         math::Pose pose;
-        /*
-        for(model_it = parsed_models_.begin(); model_it!=parsed_models_.end();++model_it)
-        {
-            // which link
-            state.child_frame_id = "base_link";
-            // write absolute pose
-            pose = model_it->model_ptr->GetWorldPose();
-            state.pose.pose.position.x = pose.pos.x;
-            state.pose.pose.position.y = pose.pos.y;
-            state.pose.pose.position.z = pose.pos.z;
-            state.pose.pose.orientation.x = pose.rot.x;
-            state.pose.pose.orientation.y = pose.rot.y;
-            state.pose.pose.orientation.z = pose.rot.z;
-            state.pose.pose.orientation.w = pose.rot.w;
-
-            // write relative linear velocity
-            vec = model_it->model_ptr->GetRelativeLinearVel();
-            state.twist.twist.linear.x = vec.x;
-            state.twist.twist.linear.y = vec.y;
-            state.twist.twist.linear.z = vec.z;
-            // write relative angular velocity
-            vec = model_it->model_ptr->GetRelativeAngularVel();
-            state.twist.twist.angular.x = vec.x;
-            state.twist.twist.angular.y = vec.y;
-            state.twist.twist.angular.z = vec.z;
-
-            // publish
-            model_it->state_publisher.publish(state);
-        }*/
-
-        //  ROS_INFO("Link %s: Applying buoyancy force (%.01f, %.01f, %.01f)", link.name.c_str(), link.buoyant_force.x, link.buoyant_force.y, link.buoyant_force.z);
     }
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
 }
@@ -228,19 +177,12 @@ void FreeFloatingFluidPlugin::ParseNewModel(const physics::ModelPtr &_model)
     model_st new_model;
     new_model.name = _model->GetName();
     new_model.model_ptr = _model;
-    //new_model.state_publisher = rosnode_->advertise<nav_msgs::Odometry>("/" + _model->GetName() + "/state", 1);
     // tells this model has been parsed
     parsed_models_.push_back(new_model);
 
-    // get robot description from model name
-    // we cannot do anything without the robot_description, as a custom parsing is required to get buoyancy tags
-    /*
-    if(!rosnode_->hasParam("/" + _model->GetName() + "/" + description_))
-        return;
-    */
     const unsigned int previous_link_number = buoyant_links_.size();
     std::string urdf_content;
-    //rosnode_->getParam("/" + _model->GetName() + "/" + description_, urdf_content);
+
     // parse actual URDF as XML (that's ugly) to get custom buoyancy tags
     cout << ("> ") << __FUNCTION__ << __LINE__ << ("\n");
     // links from urdf
@@ -458,16 +400,5 @@ void FreeFloatingFluidPlugin::RemoveDeletedModel(std::vector<model_st>::iterator
     // remove it from the list
     _model_it = parsed_models_.erase(_model_it);
 }
-
-/*
-void FreeFloatingFluidPlugin::FluidVelocityCallBack(const geometry_msgs::Vector3ConstPtr &_msg)
-{
-    // store fluid velocity
-    fluid_velocity_.Set(_msg->x, _msg->y, _msg->z);
-}*/
-
-
-
-
 
 }
