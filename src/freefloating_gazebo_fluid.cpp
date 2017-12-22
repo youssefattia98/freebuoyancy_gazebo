@@ -11,7 +11,7 @@
 #include <gazebo/math/Pose.hh>
 
 
-#include <freefloating_gazebo/freefloating_gazebo_fluid.h>
+#include "freefloating_gazebo_fluid.h"
 
 using std::cout;
 using std::endl;
