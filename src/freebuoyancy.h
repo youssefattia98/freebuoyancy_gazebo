@@ -3,23 +3,19 @@
 
 #include <gazebo/common/Plugin.hh>
 
-namespace gazebo
-{
+namespace gazebo {
 
-class FreeByouancyPlugin : public  WorldPlugin
-{
+class FreeByouancyPlugin : public  WorldPlugin {
 public:
     FreeByouancyPlugin() {}
-    ~FreeByouancyPlugin()
-    {
+    ~FreeByouancyPlugin() {
     }
 
     virtual void Load(physics::WorldPtr _world, sdf::ElementPtr _sdf);
     virtual void Update();
 
 private:
-    struct link_st
-    {
+    struct link_st {
         std::string model_name;
         physics::LinkPtr link;
         math::Vector3 buoyant_force;
@@ -29,8 +25,7 @@ private:
         double limit;
     };
 
-    struct model_st
-    {
+    struct model_st {
         std::string name;
         physics::ModelPtr model_ptr;
     };
