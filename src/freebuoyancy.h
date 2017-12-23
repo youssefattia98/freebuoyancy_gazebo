@@ -1,18 +1,14 @@
-#ifndef FREEFLOATINGGAZEBOFLUID_H
-#define FREEFLOATINGGAZEBOFLUID_H
+#pragma once
 
 #include <gazebo/common/Plugin.hh>
 
 namespace gazebo {
 
-class FreeByouancyPlugin : public  WorldPlugin {
+class FreeBuoyancyPlugin : public  ModelPlugin {
 public:
-    FreeByouancyPlugin() {}
-    ~FreeByouancyPlugin() {
-    }
 
-    virtual void Load(physics::WorldPtr _world, sdf::ElementPtr _sdf);
-    virtual void Update();
+    virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
+    virtual void OnUpdate();
 
 private:
     struct link_st {
@@ -54,6 +50,6 @@ private:
     math::Vector3 fluid_velocity_;
 
 };
-GZ_REGISTER_WORLD_PLUGIN(FreeByouancyPlugin)
+
+GZ_REGISTER_MODEL_PLUGIN(FreeBuoyancyPlugin)
 }
-#endif // FREEFLOATINGGAZEBOFLUID_H

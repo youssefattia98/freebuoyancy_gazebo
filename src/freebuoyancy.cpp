@@ -19,7 +19,7 @@ using std::string;
 
 namespace gazebo {
 
-void FreeByouancyPlugin::ReadVector3(const std::string &_string, math::Vector3 &_vector) {
+void FreeBuoyancyPlugin::ReadVector3(const std::string &_string, math::Vector3 &_vector) {
     std::stringstream ss(_string);
     double xyz[3];
     for (unsigned int i=0; i<3; ++i)
@@ -27,10 +27,10 @@ void FreeByouancyPlugin::ReadVector3(const std::string &_string, math::Vector3 &
     _vector.Set(xyz[0], xyz[1], xyz[2]);
 }
 
-void FreeByouancyPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf) {
-    cout << ("Loading freebuoyancy_gazebo plugin -\n");
+void FreeBuoyancyPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
+    cout << ("Loading freebuoyancy_gazebo plugin...\n");
 
-    this->world_ = _world;
+    this->world_ = _model->GetWorld();
 
     // parse plugin options
     description_ = "robot_description";
@@ -56,7 +56,7 @@ void FreeByouancyPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf) {
     fluid_velocity_.Set(0, 0, 0);
 
     // Register plugin update
-    update_event_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&FreeByouancyPlugin::Update, this));
+    update_event_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&FreeBuoyancyPlugin::OnUpdate, this));
 
     // Clear existing links
     buoyant_links_.clear();
@@ -65,7 +65,8 @@ void FreeByouancyPlugin::Load(physics::WorldPtr _world, sdf::ElementPtr _sdf) {
     cout << ("Loaded freebuoyancy_gazebo plugin.\n");
 }
 
-void FreeByouancyPlugin::Update() {
+void FreeBuoyancyPlugin::OnUpdate() {
+
     // look for new world models
     unsigned int i;
     std::vector<model_st>::iterator model_it;
@@ -143,7 +144,7 @@ void FreeByouancyPlugin::Update() {
 
 
 
-void FreeByouancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
+void FreeBuoyancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
     // define new model structure: name / pointer / publisher to odometry
     model_st new_model;
     new_model.name = _model->GetName();
@@ -263,13 +264,13 @@ void FreeByouancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
         }       // out of condition: in sdf
     }           // out of loop: all urdf nodes
     if (previous_link_number == buoyant_links_.size()) {
-        cout << "Buoyancy plugin" << "No links subject to buoyancy inside " << _model->GetName().c_str() << ("\n");
+        cout << "Buoyancy plugin: " << "No links subject to buoyancy inside " << _model->GetName().c_str() << ("\n");
     } else {
-        cout << "Buoyancy plugin" << "Added " << (int) buoyant_links_.size()-previous_link_number << " buoy links from " << _model->GetName().c_str() << ("\n");
+        cout << "Buoyancy plugin: " << "Added " << (int) buoyant_links_.size()-previous_link_number << " buoy links from " << _model->GetName().c_str() << ("\n");
     }
 }
 
-void FreeByouancyPlugin::RemoveDeletedModel(std::vector<model_st>::iterator &_model_it) {
+void FreeBuoyancyPlugin::RemoveDeletedModel(std::vector<model_st>::iterator &_model_it) {
     cout << ("Removing deleted model: %s\n", _model_it->name.c_str());
 
     // remove model stored links
