@@ -111,10 +111,12 @@ void FreeBuoyancyPlugin::OnUpdate() {
                                          - surface_plane_.y * cob_position.y
                                          - surface_plane_.z * cob_position.z;
             if (signed_distance_to_surface > -link_it->limit) {
-                if (signed_distance_to_surface > link_it->limit)
+                if (signed_distance_to_surface > link_it->limit) {
                     actual_force *= 0;
-                else
+                    return;
+                } else {
                     actual_force *= cos(M_PI/4.*(signed_distance_to_surface/link_it->limit + 1));
+                }
             }
         }
 
