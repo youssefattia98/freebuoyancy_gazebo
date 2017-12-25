@@ -24,7 +24,7 @@ sudo make install
 ### Test it
 ```bash
 source gazebo.sh
-gazebo --verbose worlds/underwater.world -u
+gazebo worlds/freebuoyancy_demo.world -u
 ```
 
 ## References
