@@ -10,7 +10,7 @@ A Gazebo plugin to simulate underwater vehicles.
 ## Gazebo plugin
 The package builds two Gazebo plugins:
 
-- freebuoyancy_gazebo (world plugin)
+- freebuoyancy_gazebo (model plugin)
 simulates buoyancy and viscous force from water
 
 ### Install
