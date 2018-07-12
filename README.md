@@ -15,8 +15,11 @@ simulates buoyancy and viscous force from water
 
 ### Install
 ```bash
+git clone https://github.com/bluerobotics/freebuoyancy_gazebo
+cd freebuoyancy_gazebo
 mkdir build
 cd build
+cmake ..
 make
 sudo make install
 ```
@@ -25,6 +28,15 @@ sudo make install
 ```bash
 source gazebo.sh
 gazebo worlds/freebuoyancy_demo.world -u
+```
+
+## Troubleshooting
+
+If you are running gazebo7, probably you'll find a [bug in the GAZEBO_PLUGIN_PATH env variable](https://github.com/ros-infrastructure/reprepro-updater/issues/41).
+To solve that issue, it's necessary to move all plugins to the correct path.
+
+```
+sudo cp -a /usr/lib/x86_64-linux-gnu/gazebo-7.0/plugins/ /usr/lib/x86_64-linux-gnu/gazebo-7/
 ```
 
 ## References
