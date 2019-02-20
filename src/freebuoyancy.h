@@ -1,6 +1,10 @@
 #pragma once
 
 #include <gazebo/common/Plugin.hh>
+#include <ignition/math.hh>
+
+
+
 
 namespace gazebo {
 
@@ -14,10 +18,10 @@ private:
     struct link_st {
         std::string model_name;
         physics::LinkPtr link;
-        math::Vector3 buoyant_force;
-        math::Vector3 buoyancy_center;
-        math::Vector3 linear_damping;
-        math::Vector3 angular_damping;
+        ignition::math::Vector3d buoyant_force;
+        ignition::math::Vector3d buoyancy_center;
+        ignition::math::Vector3d linear_damping;
+        ignition::math::Vector3d angular_damping;
         double limit;
     };
 
@@ -27,7 +31,7 @@ private:
     };
 
     // parse a Vector3 string
-    void ReadVector3(const std::string &_string, math::Vector3 &_vector);
+    void ReadVector3(const std::string &_string, ignition::math::Vector3d &_vector);
     // parse a new model
     void ParseNewModel(const physics::ModelPtr &_model);
     // removes a deleted model
@@ -36,7 +40,7 @@ private:
 private:
     // plugin options
     bool has_surface_;
-    math::Vector4 surface_plane_;
+    ignition::math::Vector4d surface_plane_;
     std::string description_;
 
     physics::WorldPtr world_;
@@ -47,7 +51,7 @@ private:
     // models that have been parsed
     std::vector<model_st> parsed_models_;
 
-    math::Vector3 fluid_velocity_;
+    ignition::math::Vector3d fluid_velocity_;
 
 };
 

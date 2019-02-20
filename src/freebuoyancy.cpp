@@ -8,10 +8,9 @@
 #include <gazebo/physics/PhysicsEngine.hh>
 #include <tinyxml.h>
 #include <urdf_parser/urdf_parser.h>
-#include <gazebo/math/Pose.hh>
-
-
+#include <ignition/math.hh>
 #include "freebuoyancy.h"
+#include <ignition/math/Quaternion.hh>
 
 using std::cout;
 using std::endl;
@@ -19,7 +18,7 @@ using std::string;
 
 namespace gazebo {
 
-void FreeBuoyancyPlugin::ReadVector3(const std::string &_string, math::Vector3 &_vector) {
+void FreeBuoyancyPlugin::ReadVector3(const std::string &_string, ignition::math::Vector3d &_vector) {
     std::stringstream ss(_string);
     double xyz[3];
     for (unsigned int i=0; i<3; ++i)
@@ -43,12 +42,12 @@ void FreeBuoyancyPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     if (_sdf->HasElement("surface")) {
         has_surface_ = true;
         // get one surface point
-        math::Vector3 surface_point;
+        ignition::math::Vector3d surface_point;
         ReadVector3(_sdf->Get<std::string>("surface"), surface_point);
         // get gravity
-        const math::Vector3 WORLD_GRAVITY = world_->GetPhysicsEngine()->GetGravity().Normalize();
+        const ignition::math::Vector3d WORLD_GRAVITY = world_->Gravity().Normalize();
         // water surface is orthogonal to gravity
-        surface_plane_.Set(WORLD_GRAVITY.x, WORLD_GRAVITY.y, WORLD_GRAVITY.z, WORLD_GRAVITY.Dot(surface_point));
+        surface_plane_.Set(WORLD_GRAVITY.X(), WORLD_GRAVITY.Y(), WORLD_GRAVITY.Z(), WORLD_GRAVITY.Dot(surface_point));
     }
 
     if (_sdf->HasElement("fluidTopic"))  fluid_topic = _sdf->Get<std::string>("fluidTopic");
@@ -72,22 +71,22 @@ void FreeBuoyancyPlugin::OnUpdate() {
     std::vector<model_st>::iterator model_it;
     bool found;
 
-    for (i=0; i<world_->GetModelCount(); ++i) {
+    for (i=0; i<world_->ModelCount(); ++i) {
         found = false;
         for (model_it = parsed_models_.begin(); model_it!=parsed_models_.end(); ++model_it) {
-            if (world_->GetModel(i)->GetName() == model_it->name)
+            if (world_->ModelByIndex(i)->GetName() == model_it->name)
                 found = true;
         }
-        if (!found && !(world_->GetModel(i)->IsStatic())) // model not in listand not static, parse it for potential buoyancy flags
-            ParseNewModel(world_->GetModel(i));
+        if (!found && !(world_->ModelByIndex(i)->IsStatic())) // model not in listand not static, parse it for potential buoyancy flags
+            ParseNewModel(world_->ModelByIndex(i));
     }
 
     // look for deleted world models
     model_it = parsed_models_.begin();
     while (model_it != parsed_models_.end()) {
         found = false;
-        for (i=0; i<world_->GetModelCount(); ++i) {
-            if (world_->GetModel(i)->GetName() == model_it->name)
+        for (i=0; i<world_->ModelCount(); ++i) {
+            if (world_->ModelByIndex(i)->GetName() == model_it->name)
                 found = true;
         }
         if (!found) // model name not in world anymore, remove the corresponding links
@@ -97,19 +96,19 @@ void FreeBuoyancyPlugin::OnUpdate() {
     }
 
     // here buoy_links is up-to-date with the links that are subject to buoyancy, let's apply it
-    math::Vector3 actual_force, cob_position, velocity_difference, torque;
+    ignition::math::Vector3d actual_force, cob_position, velocity_difference, torque;
     double signed_distance_to_surface;
     for (std::vector<link_st>::iterator link_it = buoyant_links_.begin(); link_it!=buoyant_links_.end(); ++link_it) {
         // get world position of the center of buoyancy
-        cob_position = link_it->link->GetWorldPose().pos + link_it->link->GetWorldPose().rot.RotateVector(link_it->buoyancy_center);
+        cob_position = link_it->link->WorldPose().Pos() + link_it->link->WorldPose().Rot().RotateVector(link_it->buoyancy_center);
         // start from the theoretical buoyancy force
         actual_force = link_it->buoyant_force;
         if (has_surface_) {
             // adjust force depending on distance to surface (very simple model)
-            signed_distance_to_surface = surface_plane_.w
-                                         - surface_plane_.x * cob_position.x
-                                         - surface_plane_.y * cob_position.y
-                                         - surface_plane_.z * cob_position.z;
+            signed_distance_to_surface = surface_plane_.W()
+                                         - surface_plane_.X() * cob_position.X()
+                                         - surface_plane_.Y() * cob_position.Y()
+                                         - surface_plane_.Z() * cob_position.Z();
             if (signed_distance_to_surface > -link_it->limit) {
                 if (signed_distance_to_surface > link_it->limit) {
                     actual_force *= 0;
@@ -122,25 +121,25 @@ void FreeBuoyancyPlugin::OnUpdate() {
 
         // get velocity damping
         // linear velocity difference in the link frame
-        velocity_difference = link_it->link->GetWorldPose().rot.RotateVectorReverse(link_it->link->GetWorldLinearVel() - fluid_velocity_);
+        velocity_difference = link_it->link->WorldPose().Rot().RotateVectorReverse(link_it->link->WorldLinearVel() - fluid_velocity_);
         // to square
-        velocity_difference.x *= fabs(velocity_difference.x);
-        velocity_difference.y *= fabs(velocity_difference.y);
-        velocity_difference.z *= fabs(velocity_difference.z);
+        velocity_difference.X()*= fabs(velocity_difference.X());
+        velocity_difference.Y()*= fabs(velocity_difference.Y());
+        velocity_difference.Z()*= fabs(velocity_difference.Z());
         // apply damping coefficients
-        actual_force -= link_it->link->GetWorldPose().rot.RotateVector(link_it->linear_damping * velocity_difference);
+        actual_force -= link_it->link->WorldPose().Rot().RotateVector(link_it->linear_damping * velocity_difference);
 
         link_it->link->AddForceAtWorldPosition(actual_force, cob_position);
 
         // same for angular damping
-        velocity_difference = link_it->link->GetRelativeAngularVel();
-        velocity_difference.x *= fabs(velocity_difference.x);
-        velocity_difference.y *= fabs(velocity_difference.y);
-        velocity_difference.z *= fabs(velocity_difference.z);
+        velocity_difference = link_it->link->RelativeAngularVel();
+        velocity_difference.X()*= fabs(velocity_difference.X());
+        velocity_difference.Y()*= fabs(velocity_difference.Y());
+        velocity_difference.Z()*= fabs(velocity_difference.Z());
         link_it->link->AddRelativeTorque(-link_it->angular_damping*velocity_difference);
 
-        math::Vector3 vec;
-        math::Pose pose;
+        ignition::math::Vector3d vec;
+        ignition::math::Pose3d pose;
     }
 }
 
@@ -162,7 +161,7 @@ void FreeBuoyancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
     TiXmlDocument urdf_doc;
     urdf_doc.Parse(urdf_content.c_str(), 0);
 
-    const math::Vector3 WORLD_GRAVITY = world_->GetPhysicsEngine()->GetGravity();
+    const ignition::math::Vector3d WORLD_GRAVITY = world_->Gravity();
 
     TiXmlElement* urdf_root = urdf_doc.FirstChildElement();
     TiXmlElement* link_test;
@@ -176,45 +175,42 @@ void FreeBuoyancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
         urdf_doc.Parse(sdf_element->ToString("").c_str(), 0);
         urdf_root = urdf_doc.FirstChildElement();
         if (sdf_element->HasElement("link")) {
-
             auto link = sdf_element->GetElement("link");
-            auto linkAttribute = link->GetAttribute("name");
-            if (linkAttribute) {
-                auto linkName = linkAttribute->GetAsString();
-                if (link->HasElement("buoyancy")) {
-                    found = true;
-                    link_test = (new TiXmlElement(link->ToString("")));
-                    link_node = link_test->Clone();
-                    sdf_link = _model->GetChildLink(linkName);
+            auto linkName = link->GetAttribute("name")->GetAsString();
 
-                    for (auto buoy = link->GetElement("buoyancy"); buoy != NULL; buoy = buoy->GetNextElement()) {
+            if (link->HasElement("buoyancy")) {
+                found = true;
+                link_test = (new TiXmlElement(link->ToString("")));
+                link_node = link_test->Clone();
+                sdf_link = _model->GetChildLink(linkName);
 
-                        // this link is subject to buoyancy, create an instance
-                        link_st new_buoy_link;
-                        new_buoy_link.model_name = _model->GetName();            // in case this model is deleted
-                        new_buoy_link.link =  sdf_link;    // to apply forces
-                        new_buoy_link.limit = .1;
+                for (auto buoy = link->GetElement("buoyancy"); buoy != NULL; buoy = buoy->GetNextElement()) {
 
-                        // get data from urdf
-                        // default values
-                        new_buoy_link.buoyancy_center = sdf_link->GetInertial()->GetCoG();
-                        new_buoy_link.linear_damping = new_buoy_link.angular_damping = 5 * math::Vector3::One * sdf_link->GetInertial()->GetMass();
+                    // this link is subject to buoyancy, create an instance
+                    link_st new_buoy_link;
+                    new_buoy_link.model_name = _model->GetName();            // in case this model is deleted
+                    new_buoy_link.link =  sdf_link;    // to apply forces
+                    new_buoy_link.limit = .1;
 
-                        compensation = 0;
+                    // get data from urdf
+                    // default values
+                    new_buoy_link.buoyancy_center = sdf_link->GetInertial()->CoG();
+                    new_buoy_link.linear_damping = new_buoy_link.angular_damping = 5 * ignition::math::Vector3d::One * sdf_link->GetInertial()->Mass();
 
-                        if (buoy->HasElement("origin")) {
-                            auto vec = buoy->GetElement("origin")->GetAttribute("xyz")->GetAsString();
-                            ReadVector3(vec, new_buoy_link.buoyancy_center);
-                        }
-                        if (buoy->HasElement("compensation")) {
-                            compensation = stof(buoy->GetElement("compensation")->GetValue()->GetAsString());
-                        }
+                    compensation = 0;
 
-                        new_buoy_link.buoyant_force = -compensation * sdf_link->GetInertial()->GetMass() * WORLD_GRAVITY;
-
-                        // store this link
-                        buoyant_links_.push_back(new_buoy_link);
+                    if (buoy->HasElement("origin")) {
+                        auto vec = buoy->GetElement("origin")->GetAttribute("xyz")->GetAsString();
+                        ReadVector3(vec, new_buoy_link.buoyancy_center);
                     }
+                    if (buoy->HasElement("compensation")) {
+                        compensation = stof(buoy->GetElement("compensation")->GetValue()->GetAsString());
+                    }
+
+                    new_buoy_link.buoyant_force = -compensation * sdf_link->GetInertial()->Mass() * WORLD_GRAVITY;
+
+                    // store this link
+                    buoyant_links_.push_back(new_buoy_link);
                 }
             }
         }
@@ -235,8 +231,8 @@ void FreeBuoyancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
 
                     // get data from urdf
                     // default values
-                    new_buoy_link.buoyancy_center = sdf_link->GetInertial()->GetCoG();
-                    new_buoy_link.linear_damping = new_buoy_link.angular_damping = 5 * math::Vector3::One * sdf_link->GetInertial()->GetMass();
+                    new_buoy_link.buoyancy_center = sdf_link->GetInertial()->CoG();
+                    new_buoy_link.linear_damping = new_buoy_link.angular_damping = 5 * ignition::math::Vector3d::One * sdf_link->GetInertial()->Mass();
 
                     compensation = 0;
                     for (buoy_node = link_node->FirstChild(); buoy_node != 0; buoy_node = buoy_node->NextSibling()) {
@@ -260,7 +256,7 @@ void FreeBuoyancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
                             cout << ("Unknown tag <%s/> in buoyancy node for model %s\n", buoy_node->ValueStr().c_str(), _model->GetName().c_str());
                     }
 
-                    new_buoy_link.buoyant_force = -compensation * sdf_link->GetInertial()->GetMass() * WORLD_GRAVITY;
+                    new_buoy_link.buoyant_force = -compensation * sdf_link->GetInertial()->Mass() * WORLD_GRAVITY;
 
                     // store this link
                     buoyant_links_.push_back(new_buoy_link);
