@@ -176,42 +176,45 @@ void FreeBuoyancyPlugin::ParseNewModel(const physics::ModelPtr &_model) {
         urdf_doc.Parse(sdf_element->ToString("").c_str(), 0);
         urdf_root = urdf_doc.FirstChildElement();
         if (sdf_element->HasElement("link")) {
+
             auto link = sdf_element->GetElement("link");
-            auto linkName = link->GetAttribute("name")->GetAsString();
+            auto linkAttribute = link->GetAttribute("name");
+            if (linkAttribute) {
+                auto linkName = linkAttribute->GetAsString();
+                if (link->HasElement("buoyancy")) {
+                    found = true;
+                    link_test = (new TiXmlElement(link->ToString("")));
+                    link_node = link_test->Clone();
+                    sdf_link = _model->GetChildLink(linkName);
 
-            if (link->HasElement("buoyancy")) {
-                found = true;
-                link_test = (new TiXmlElement(link->ToString("")));
-                link_node = link_test->Clone();
-                sdf_link = _model->GetChildLink(linkName);
+                    for (auto buoy = link->GetElement("buoyancy"); buoy != NULL; buoy = buoy->GetNextElement()) {
 
-                for (auto buoy = link->GetElement("buoyancy"); buoy != NULL; buoy = buoy->GetNextElement()) {
+                        // this link is subject to buoyancy, create an instance
+                        link_st new_buoy_link;
+                        new_buoy_link.model_name = _model->GetName();            // in case this model is deleted
+                        new_buoy_link.link =  sdf_link;    // to apply forces
+                        new_buoy_link.limit = .1;
 
-                    // this link is subject to buoyancy, create an instance
-                    link_st new_buoy_link;
-                    new_buoy_link.model_name = _model->GetName();            // in case this model is deleted
-                    new_buoy_link.link =  sdf_link;    // to apply forces
-                    new_buoy_link.limit = .1;
+                        // get data from urdf
+                        // default values
+                        new_buoy_link.buoyancy_center = sdf_link->GetInertial()->GetCoG();
+                        new_buoy_link.linear_damping = new_buoy_link.angular_damping = 5 * math::Vector3::One * sdf_link->GetInertial()->GetMass();
 
-                    // get data from urdf
-                    // default values
-                    new_buoy_link.buoyancy_center = sdf_link->GetInertial()->GetCoG();
-                    new_buoy_link.linear_damping = new_buoy_link.angular_damping = 5 * math::Vector3::One * sdf_link->GetInertial()->GetMass();
+                        compensation = 0;
 
-                    compensation = 0;
+                        if (buoy->HasElement("origin")) {
+                            auto vec = buoy->GetElement("origin")->GetAttribute("xyz")->GetAsString();
+                            ReadVector3(vec, new_buoy_link.buoyancy_center);
+                        }
+                        if (buoy->HasElement("compensation")) {
+                            compensation = stof(buoy->GetElement("compensation")->GetValue()->GetAsString());
+                        }
 
-                    if (buoy->HasElement("origin")) {
-                        auto vec = buoy->GetElement("origin")->GetAttribute("xyz")->GetAsString();
-                        ReadVector3(vec, new_buoy_link.buoyancy_center);
+                        new_buoy_link.buoyant_force = -compensation * sdf_link->GetInertial()->GetMass() * WORLD_GRAVITY;
+
+                        // store this link
+                        buoyant_links_.push_back(new_buoy_link);
                     }
-                    if (buoy->HasElement("compensation")) {
-                        compensation = stof(buoy->GetElement("compensation")->GetValue()->GetAsString());
-                    }
-
-                    new_buoy_link.buoyant_force = -compensation * sdf_link->GetInertial()->GetMass() * WORLD_GRAVITY;
-
-                    // store this link
-                    buoyant_links_.push_back(new_buoy_link);
                 }
             }
         }
