@@ -37,24 +37,39 @@ void FreeBuoyancyPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     surface_plane_.Set(0, 0, 1, 0); // default ocean surface plane is Z=0
     std::string fluid_topic = "current";
 
-    if (_sdf->HasElement("descriptionParam"))  description_ = _sdf->Get<std::string>("descriptionParam");
+    // Check for 'descriptionParam' in the SDF
+    if (_sdf->HasElement("descriptionParam")) {
+        description_ = _sdf->Get<std::string>("descriptionParam");
+    }
 
+    // Check for water surface parameters
     if (_sdf->HasElement("surface")) {
         has_surface_ = true;
-        // get one surface point
         ignition::math::Vector3d surface_point;
         ReadVector3(_sdf->Get<std::string>("surface"), surface_point);
-        // get gravity
+        
+        // Set the surface plane based on the world's gravity direction
         const ignition::math::Vector3d WORLD_GRAVITY = world_->Gravity().Normalize();
-        // water surface is orthogonal to gravity
         surface_plane_.Set(WORLD_GRAVITY.X(), WORLD_GRAVITY.Y(), WORLD_GRAVITY.Z(), WORLD_GRAVITY.Dot(surface_point));
     }
 
-    if (_sdf->HasElement("fluidTopic"))  fluid_topic = _sdf->Get<std::string>("fluidTopic");
+    // Check for 'fluidTopic' in the SDF
+    if (_sdf->HasElement("fluidTopic")) {
+        fluid_topic = _sdf->Get<std::string>("fluidTopic");
+    }
 
-    fluid_velocity_.Set(0, 0, 0);
+    // Check for 'current_velocity' in the SDF and set fluid_velocity_
+    if (_sdf->HasElement("current_velocity")) {
+        std::string velocity_string = _sdf->Get<std::string>("current_velocity");
+        ReadVector3(velocity_string, fluid_velocity_);
+        cout << "Current velocity set to: " << fluid_velocity_ << endl;
+    } else {
+        // Default to zero current if not specified
+        fluid_velocity_.Set(0, 0, 0);
+        cout << "No current velocity specified, defaulting to (0, 0, 0)." << endl;
+    }
 
-    // Register plugin update
+    // Register plugin update callback
     update_event_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&FreeBuoyancyPlugin::OnUpdate, this));
 
     // Clear existing links
@@ -63,6 +78,7 @@ void FreeBuoyancyPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
     cout << ("Loaded freebuoyancy_gazebo plugin.\n");
 }
+
 
 void FreeBuoyancyPlugin::OnUpdate() {
 
